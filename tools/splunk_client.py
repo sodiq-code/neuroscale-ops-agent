@@ -75,6 +75,9 @@ def run_spl_query(spl: str, earliest: str = "-1h", latest: str = "now",
             "latest_time": latest,
             "count": max_results,
         }
+        # Splunk SDK requires the query to start with 'search' keyword
+        if not spl.strip().startswith("search "):
+            spl = "search " + spl.strip()
         job = service.jobs.create(spl, **kwargs)
 
         # Stream results
