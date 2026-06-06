@@ -38,7 +38,7 @@ from tools.kubernetes_ops import (
 
 console = Console()
 
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "llama-3.1-70b-versatile")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "llama-3.3-70b-versatile")
 DEMO_MODE    = os.getenv("DEMO_MODE", "false").lower() == "true"
 
 # ── Tool Definitions (OpenAI function calling) ────────────────────────────────
