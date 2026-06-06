@@ -25,6 +25,12 @@ from tools.splunk_client import (
     send_to_hec,
 )
 from tools.runbook_rag import lookup_runbook
+from tools.splunk_hosted_models import (
+    analyze_security_events,
+    forecast_resource_usage,
+    summarize_incident,
+    generate_spl_query,
+)
 from tools.kubernetes_ops import (
     argocd_sync, restart_inference_service, patch_inference_service_memory,
     get_inference_services, get_argocd_status, get_opencost_by_namespace,
@@ -203,6 +209,89 @@ TOOLS = [
             },
         },
     },
+    # ── Splunk Hosted Models (AI Toolkit 5.7+) ─────────────────────────────
+    {
+        "type": "function",
+        "function": {
+            "name": "splunk_security_analysis",
+            "description": (
+                "Use Splunk's Foundation-Sec-1.1-8B hosted model to perform AI-powered "
+                "security triage on Kyverno policy violations and K8s security events. "
+                "This model runs INSIDE Splunk — data never leaves the Splunk perimeter. "
+                "Use this when a policy violation alert fires or when a security posture "
+                "assessment is requested. Returns severity ranking, risk explanation, "
+                "and specific remediation commands."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "context": {
+                        "type": "string",
+                        "description": "Additional context to pass to the model (e.g. alert details)",
+                    },
+                    "namespace": {
+                        "type": "string",
+                        "description": "K8s namespace to scope analysis, or 'all'",
+                        "default": "all",
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "splunk_forecast",
+            "description": (
+                "Use Splunk's Cisco Deep Time Series hosted model for zero-shot forecasting "
+                "and anomaly detection on operational metrics (cost, latency, errors, replicas). "
+                "This model runs INSIDE Splunk — no training data required. "
+                "Use this to predict resource exhaustion, detect cost trajectory before it spikes, "
+                "or flag anomalous latency patterns before they cause SLA breaches."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "namespace": {
+                        "type": "string",
+                        "description": "K8s namespace to analyse",
+                        "default": "inference",
+                    },
+                    "metric": {
+                        "type": "string",
+                        "enum": ["cost", "latency", "errors", "replicas"],
+                        "description": "Metric to forecast",
+                        "default": "cost",
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "splunk_generate_spl",
+            "description": (
+                "Use Splunk's GPT-OSS-120B hosted model to generate SPL queries from "
+                "natural language. This is the AI Assistant pattern — describe what you "
+                "want to query in plain English and get valid SPL back. "
+                "Use this when you need a custom SPL query that isn't covered by the "
+                "standard tools."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "request": {
+                        "type": "string",
+                        "description": "Natural language description of what to query",
+                    },
+                },
+                "required": ["request"],
+            },
+        },
+    },
 ]
 
 SYSTEM_PROMPT = """You are the NeuroScale Ops Agent — an autonomous incident commander for a 
@@ -215,6 +304,7 @@ production Kubernetes MLOps platform. You operate with precision, speed, and com
 - **OpenCost**: Real-time cost attribution per namespace
 - **Backstage**: Developer golden path portal (scaffolded model deployments)
 - **Splunk**: Observability brain (KServe events, Kyverno violations, OpenCost metrics, ArgoCD sync events)
+- **Splunk Hosted Models**: Foundation-Sec-1.1-8B (security triage), Cisco Deep Time Series (forecasting), GPT-OSS-120B (SPL generation) — all run inside Splunk, zero data egress
 
 ## How You Operate
 1. **Always query Splunk first.** Never diagnose without data.
@@ -270,6 +360,19 @@ def dispatch_tool(name: str, args: dict) -> Any:
         }
     elif name == "get_cost_direct":
         result = get_opencost_by_namespace(args.get("window", "6h"))
+    # ── Splunk Hosted Models ──────────────────────────────────────────────────
+    elif name == "splunk_security_analysis":
+        result = analyze_security_events(
+            context=args.get("context", ""),
+            namespace=args.get("namespace", "all"),
+        )
+    elif name == "splunk_forecast":
+        result = forecast_resource_usage(
+            namespace=args.get("namespace", "inference"),
+            metric=args.get("metric", "cost"),
+        )
+    elif name == "splunk_generate_spl":
+        result = generate_spl_query(args["request"])
     else:
         result = {"error": f"Unknown tool: {name}"}
 

@@ -10,6 +10,7 @@
 [![Track](https://img.shields.io/badge/Track-Platform%20%26%20Developer%20Experience-green)](https://splunk.devpost.com)
 [![Bonus](https://img.shields.io/badge/Bonus-Best%20Use%20of%20Splunk%20MCP%20Server-orange)](https://splunk.devpost.com)
 [![Bonus](https://img.shields.io/badge/Bonus-Best%20Use%20of%20Splunk%20Developer%20Tools-orange)](https://splunk.devpost.com)
+[![Bonus](https://img.shields.io/badge/Bonus-Best%20Use%20of%20Splunk%20Hosted%20Models-orange)](https://splunk.devpost.com)
 
 ---
 
@@ -18,7 +19,7 @@
 **NeuroScale Ops Agent** is a GPT-4o-powered autonomous agent that monitors, detects, and self-heals a Kubernetes-based machine learning platform — using **Splunk as its single pane of glass**.
 
 **Hackathon Track:** Platform & Developer Experience  
-**Bonus Targets:** Best Use of Splunk MCP Server · Best Use of Splunk Developer Tools
+**Bonus Targets:** Best Use of Splunk MCP Server · Best Use of Splunk Hosted Models · Best Use of Splunk Developer Tools
 
 It extends [NeuroScale Platform](https://github.com/sodiq-code/neuroscale-platform) (ArgoCD + KServe + Kyverno + OpenCost + Backstage) with:
 
@@ -80,6 +81,7 @@ This project leverages the following Splunk AI capabilities from [dev.splunk.com
 | Capability | Implementation | Prize Target |
 |-----------|----------------|-------------|
 | **[Splunk MCP Server](https://dev.splunk.com/enterprise/docs/devtools/mcp/)** | Agent queries live Splunk data mid-reasoning via Model Context Protocol | Best Use of MCP Server ($1K) |
+| **[Splunk Hosted Models](https://www.splunk.com/en_us/products/ai-toolkit.html)** | `tools/splunk_hosted_models.py` — Foundation-Sec (security triage), Cisco Deep Time Series (forecasting), GPT-OSS-120B (SPL generation) via `\| ai` SPL command | Best Use of Hosted Models ($1K) |
 | **[Python SDK for AI](https://dev.splunk.com/enterprise/docs/devtools/python/)** | `tools/splunk_client.py` — SDK-based REST queries, index management, SPL execution | Best Use of Developer Tools ($1K) |
 | **[HEC Ingestion](https://docs.splunk.com/Documentation/Splunk/latest/Data/UsetheHTTPEventCollector)** | `splunk-integration/k8s_to_splunk.py` — 4 threads, structured JSON events | Core capability |
 | **SPL Queries** | Model health, cost breakdown, policy violations, ArgoCD status | Core capability |
@@ -211,7 +213,7 @@ See [`docs/SPLUNK_SETUP.md`](docs/SPLUNK_SETUP.md) for:
 ```
 neuroscale-ops-agent/
 ├── agent/
-│   └── core.py                          # GPT-4o function-calling loop (11 tools)
+│   └── core.py                          # GPT-4o function-calling loop (14 tools)
 ├── tools/
 │   ├── splunk_client.py                 # Splunk HEC + SDK + SPL query engine
 │   ├── runbook_rag.py                   # Keyword RAG over runbook.md

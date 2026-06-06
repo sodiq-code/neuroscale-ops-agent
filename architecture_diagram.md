@@ -30,6 +30,15 @@ flowchart TD
         MCP["Splunk MCP Server\nModel Context Protocol"]
         IDX --> ALERTS
         IDX --> MCP
+
+        subgraph HOSTED_MODELS["🧠 Splunk Hosted Models (AI Toolkit 5.7+)"]
+            direction LR
+            FSEC["Foundation-Sec-1.1-8B\nSecurity Triage"]
+            DTS["Cisco Deep Time Series\nZero-shot Forecasting"]
+            GPT20["GPT-OSS-20B\nIncident Summaries"]
+            GPT120["GPT-OSS-120B\nSPL Generation"]
+        end
+        IDX -->|"| ai model=..."| HOSTED_MODELS
     end
 
     subgraph AGENT["🤖 NeuroScale Ops Agent"]
@@ -62,6 +71,7 @@ flowchart TD
     HEC --> IDX
     ALERTS -->|"webhook trigger"| AGENT
     MCP -->|"live SPL queries"| AGENT
+    HOSTED_MODELS -->|"AI inference results"| AGENT
     AGENT --> WORKFLOWS
     WORKFLOWS --> K8S_OPS
     K8S_OPS -->|"kubectl / ArgoCD API"| K8S

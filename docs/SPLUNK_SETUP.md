@@ -180,6 +180,66 @@ bash scripts/smoke-test-extended.sh
 
 ---
 
+## Enable Splunk Hosted Models (AI Toolkit 5.7+)
+
+Splunk Hosted Models are native generative AI models (Foundation-Sec, Cisco DTS, GPT-OSS-20B/120B)
+accessible directly inside SPL via the `| ai` command. No external API calls — inference runs
+entirely within the Splunk security perimeter.
+
+> **Requirement:** Splunk Cloud Platform + AI Toolkit app v5.7 or later.
+> On-prem Splunk Enterprise → DEMO_MODE or SPL-only fallback is used automatically.
+
+### Step 1 — Install AI Toolkit from Splunkbase
+
+1. Log in to your Splunk Cloud instance
+2. Go to **Apps → Browse More Apps** → search `AI Toolkit`
+3. Install **Splunk AI Toolkit** (v5.7+), or download from:
+   [splunkbase.splunk.com/app/6393](https://splunkbase.splunk.com/app/6393)
+4. Restart Splunk after install
+
+### Step 2 — Enable Hosted Models
+
+1. In Splunk Cloud, go to **AI Toolkit → Hosted Models**
+2. Accept the AI model terms of service
+3. Toggle **Enable Hosted Models** → On
+4. Available models will appear: `foundation-sec-1.1-8b-instruct`, `cisco-tdt`, `gpt-oss-20b`, `gpt-oss-120b`
+
+### Step 3 — Verify the `| ai` Command Works
+
+Run this SPL in Splunk Search to confirm hosted models are operational:
+
+```spl
+| makeresults
+| eval test_event="Kubernetes pod crashed due to OOMKilled"
+| ai model="gpt-oss-20b" prompt="Summarize this incident in one sentence."
+```
+
+Expected: A result row with the model's response in the `_ai_response` or `response` field.
+
+### Step 4 — Enable in NeuroScale Agent
+
+Set this in your `.env`:
+
+```bash
+SPLUNK_CLOUD_HOSTED_MODELS=true
+```
+
+Then restart the agent — it will now use:
+- **Foundation-Sec-1.1-8B** for Kyverno policy triage (`analyze_security_events`)
+- **Cisco DTS** for resource forecasting & anomaly detection (`forecast_resource_usage`)
+- **GPT-OSS-20B** for incident summarization (`summarize_incident`)
+- **GPT-OSS-120B** for natural-language SPL generation (`generate_spl_query`)
+
+### Hosted Models vs DEMO_MODE
+
+| Mode | Behaviour |
+|------|-----------|
+| `DEMO_MODE=true` | Synthetic AI responses — no Splunk needed |
+| `SPLUNK_CLOUD_HOSTED_MODELS=false` | SPL queries run; AI inference skipped (Enterprise fallback) |
+| `SPLUNK_CLOUD_HOSTED_MODELS=true` | Full `| ai` command execution on Splunk Cloud |
+
+---
+
 ## Troubleshooting
 
 | Problem | Fix |
