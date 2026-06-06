@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 
 urllib3.disable_warnings()
 
-HEC_URL = "http://localhost:8088/services/collector/event"
+HEC_URL = "https://localhost:8088/services/collector/event"
 HEC_TOKEN = "b9212ff2-23e9-47e6-921d-a377227f8290"
 INDEX = "neuroscale"
 
