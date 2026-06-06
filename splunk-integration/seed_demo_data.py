@@ -51,7 +51,7 @@ def seed_model_metrics():
             "gpu_utilization": round(random.uniform(0.4, 0.95), 2),
             "replicas_ready": 2 if error_rate < 0.05 else 0,
             "replicas_desired": 2
-        }, "kserve:model_metrics")
+        }, "kserve:events")
         time.sleep(0.1)
 
 def seed_cost_events():
@@ -71,7 +71,7 @@ def seed_cost_events():
             "gpu_cost": round(cost * 0.3, 4),
             "cost_delta_pct": round((cost - base) / base * 100, 1),
             "alert": cost > 50
-        }, "opencost:namespace_cost")
+        }, "opencost:metrics")
         time.sleep(0.1)
 
 def seed_policy_violations():
@@ -92,7 +92,7 @@ def seed_policy_violations():
             "severity": severity,
             "message": f"Policy {policy} violated by {resource} in {ns}",
             "remediation_available": True
-        }, "kyverno:policy_violation")
+        }, "kyverno:violations")
         time.sleep(0.2)
 
 def seed_argocd_events():
@@ -109,7 +109,7 @@ def seed_argocd_events():
             "project": "neuroscale",
             "destination_namespace": app,
             "out_of_sync_resources": 0 if status == "Synced" else random.randint(1, 3)
-        }, "argocd:sync_status")
+        }, "argocd:events")
         time.sleep(0.2)
 
 def seed_agent_actions():
@@ -144,7 +144,7 @@ def seed_agent_actions():
         }
     ]
     for action in actions:
-        send_event(action, "neuroscale:agent_action")
+        send_event(action, "neuroscale:agent")
         time.sleep(0.3)
 
 if __name__ == "__main__":
