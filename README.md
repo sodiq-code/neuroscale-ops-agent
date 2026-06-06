@@ -6,13 +6,19 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
 [![Splunk](https://img.shields.io/badge/Splunk-MCP%20%2B%20HEC-FF5733)](https://splunk.com)
-[![Built for](https://img.shields.io/badge/Hackathon-Splunk%20Agentic%20Ops-blueviolet)](https://splunk.com)
+[![Built for](https://img.shields.io/badge/Hackathon-Splunk%20Agentic%20Ops%202026-blueviolet)](https://splunk.devpost.com)
+[![Track](https://img.shields.io/badge/Track-Platform%20%26%20Developer%20Experience-green)](https://splunk.devpost.com)
+[![Bonus](https://img.shields.io/badge/Bonus-Best%20Use%20of%20Splunk%20MCP%20Server-orange)](https://splunk.devpost.com)
+[![Bonus](https://img.shields.io/badge/Bonus-Best%20Use%20of%20Splunk%20Developer%20Tools-orange)](https://splunk.devpost.com)
 
 ---
 
 ## What This Is
 
 **NeuroScale Ops Agent** is a GPT-4o-powered autonomous agent that monitors, detects, and self-heals a Kubernetes-based machine learning platform — using **Splunk as its single pane of glass**.
+
+**Hackathon Track:** Platform & Developer Experience  
+**Bonus Targets:** Best Use of Splunk MCP Server · Best Use of Splunk Developer Tools
 
 It extends [NeuroScale Platform](https://github.com/sodiq-code/neuroscale-platform) (ArgoCD + KServe + Kyverno + OpenCost + Backstage) with:
 
@@ -27,9 +33,7 @@ It extends [NeuroScale Platform](https://github.com/sodiq-code/neuroscale-platfo
 
 ## Demo
 
-> **Watch the demo:** [Link to be added after recording]
-
-[![Demo Screenshot](assets/demo-screenshot.png)](assets/demo-screenshot.png)
+> **Watch the demo:** *(Upload to YouTube after recording — see [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md) for the script)*
 
 Run it yourself in 2 minutes — no cluster or Splunk required:
 
@@ -69,16 +73,19 @@ See [`architecture_diagram.md`](architecture_diagram.md) for the full Mermaid di
 
 ---
 
-## Splunk AI Capabilities
+## Splunk AI Capabilities Used
 
-| Capability | Implementation |
-|-----------|----------------|
-| **HEC Ingestion** | `splunk-integration/k8s_to_splunk.py` — 4 threads, structured JSON events |
-| **SPL Queries** | `tools/splunk_client.py` — model health, cost breakdown, policy violations, ArgoCD status |
-| **Alert Webhooks** | `splunk-integration/alert-actions/trigger_agent.py` — Splunk fires → agent acts |
-| **MCP Protocol** | Agent queries live Splunk data mid-reasoning via MCP interface |
-| **Token Auth** | HEC token + REST API token (no OAuth — per hackathon rules) |
-| **Custom Index** | `neuroscale` index with 4 sourcetypes: `neuroscale:models`, `neuroscale:costs`, `neuroscale:policies`, `neuroscale:argocd` |
+This project leverages the following Splunk AI capabilities from [dev.splunk.com](https://dev.splunk.com):
+
+| Capability | Implementation | Prize Target |
+|-----------|----------------|-------------|
+| **[Splunk MCP Server](https://dev.splunk.com/enterprise/docs/devtools/mcp/)** | Agent queries live Splunk data mid-reasoning via Model Context Protocol | Best Use of MCP Server ($1K) |
+| **[Python SDK for AI](https://dev.splunk.com/enterprise/docs/devtools/python/)** | `tools/splunk_client.py` — SDK-based REST queries, index management, SPL execution | Best Use of Developer Tools ($1K) |
+| **[HEC Ingestion](https://docs.splunk.com/Documentation/Splunk/latest/Data/UsetheHTTPEventCollector)** | `splunk-integration/k8s_to_splunk.py` — 4 threads, structured JSON events | Core capability |
+| **SPL Queries** | Model health, cost breakdown, policy violations, ArgoCD status | Core capability |
+| **Alert Webhooks** | `splunk-integration/alert-actions/trigger_agent.py` — Splunk alert fires → agent acts | AI for Splunk Apps pattern |
+| **Token Auth** | HEC token + REST API token (no OAuth — Controlled Availability per hackathon rules) | Compliant |
+| **Custom Index** | `neuroscale` index with 4 sourcetypes: `neuroscale:models`, `neuroscale:costs`, `neuroscale:policies`, `neuroscale:argocd` | Core capability |
 
 ---
 
