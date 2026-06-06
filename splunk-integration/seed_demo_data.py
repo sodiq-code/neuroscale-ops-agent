@@ -64,7 +64,7 @@ def seed_cost_events():
         cost = base + (random.uniform(40, 65) if i == 10 else random.uniform(0, 5))
         send_event({
             "namespace": ns,
-            "hourly_cost_usd": round(cost, 4),
+            "hourly_cost": round(cost, 4),
             "daily_cost_usd": round(cost * 24, 2),
             "cpu_cost": round(cost * 0.4, 4),
             "memory_cost": round(cost * 0.3, 4),
@@ -84,9 +84,9 @@ def seed_policy_violations():
     ]
     for policy, ns, resource, severity in policies:
         send_event({
-            "policy_name": policy,
+            "policy": policy,
             "namespace": ns,
-            "resource_name": resource,
+            "resource": resource,
             "resource_kind": "Deployment",
             "action": "block",
             "severity": severity,
