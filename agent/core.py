@@ -38,7 +38,7 @@ from tools.kubernetes_ops import (
 
 console = Console()
 
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "llama-3.1-70b-versatile")
 DEMO_MODE    = os.getenv("DEMO_MODE", "false").lower() == "true"
 
 # ── Tool Definitions (OpenAI function calling) ────────────────────────────────
@@ -398,7 +398,10 @@ class NeuroScaleOpsAgent:
     """
 
     def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        )
         self.history: list[dict] = []
         self.tool_calls_log: list[dict] = []  # For UI transparency panel
 
