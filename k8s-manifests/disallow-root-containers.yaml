@@ -1,0 +1,36 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-root-containers
+spec:
+  admission: true
+  background: true
+  validationFailureAction: Enforce
+  rules:
+    - name: check-runAsNonRoot-on-deployment
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+              namespaces:
+                - default
+      exclude:
+        any:
+          # Knative/KServe creates these Deployments from Revisions.
+          - resources:
+              selector:
+                matchExpressions:
+                  - key: serving.knative.dev/configuration
+                    operator: Exists
+      skipBackgroundRequests: true
+      validate:
+        message: >-
+          Deployment containers must set securityContext.runAsNonRoot: true.
+        pattern:
+          spec:
+            template:
+              spec:
+                containers:
+                  - securityContext:
+                      runAsNonRoot: true

@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    name: Lint & Smoke Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Syntax check — all Python files
+        run: |
+          find . -name "*.py" \
+            -not -path "./.git/*" \
+            -not -path "./venv/*" \
+            -not -path "./.venv/*" \
+            | xargs python3 -m py_compile
+
+      - name: Import smoke test (demo mode)
+        env:
+          DEMO_MODE: "true"
+          OPENAI_API_KEY: "sk-test-ci-placeholder"
+        run: |
+          python3 -c "
+          import sys
+          sys.path.insert(0, '.')
+          from tools.runbook_rag import RunbookRAG
+          from tools.kubernetes_ops import KubernetesOps
+          from tools.splunk_client import SplunkClient
+          from workflows import model_down, policy_violation, cost_spike
+          print('All imports successful')
+          "
+
+      - name: RunbookRAG query test
+        env:
+          DEMO_MODE: "true"
+          OPENAI_API_KEY: "sk-test-ci-placeholder"
+        run: |
+          python3 -c "
+          import sys
+          sys.path.insert(0, '.')
+          from tools.runbook_rag import RunbookRAG
+          rag = RunbookRAG()
+          result = rag.query('model inference error')
+          assert len(result) > 0, 'RAG returned empty result'
+          print(f'RAG test passed: {len(result)} chars returned')
+          "
+
+      - name: Check required files
+        run: |
+          REQUIRED=(
+            "README.md"
+            "LICENSE"
+            "requirements.txt"
+            ".env.example"
+            "architecture_diagram.md"
+            "agent/core.py"
+            "tools/splunk_client.py"
+            "tools/runbook_rag.py"
+            "tools/kubernetes_ops.py"
+            "workflows/model_down.py"
+            "workflows/policy_violation.py"
+            "workflows/cost_spike.py"
+            "splunk-integration/k8s_to_splunk.py"
+            "ui/app.py"
+          )
+          for f in "${REQUIRED[@]}"; do
+            [ -f "$f" ] && echo "✅ $f" || { echo "❌ Missing: $f"; exit 1; }
+          done
+
+  security-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for hardcoded secrets
+        run: |
+          # Fail if any real API key patterns found (not placeholders)
+          if grep -rE 'sk-[a-zA-Z0-9]{48,}' --include="*.py" --include="*.yml" --include="*.yaml" .; then
+            echo "❌ Possible hardcoded OpenAI key found!"
+            exit 1
+          fi
+          if grep -rE 'AKIA[0-9A-Z]{16}' --include="*.py" --include="*.yml" .; then
+            echo "❌ Possible hardcoded AWS key found!"
+            exit 1
+          fi
+          echo "✅ No hardcoded secrets detected"
