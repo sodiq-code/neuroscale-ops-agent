@@ -23,16 +23,18 @@
 
 ## What This Is
 
-**NeuroScale Ops Agent** is an autonomous AI agent that monitors, detects, and self-heals a Kubernetes-based machine learning platform — using **Splunk as its single pane of glass**.
+**NeuroScale Ops Agent** is a fully autonomous AI-powered operations platform for Kubernetes-based machine learning infrastructure — with **Splunk as its observability backbone and reasoning engine**.
 
-It extends [NeuroScale Platform](https://github.com/sodiq-code/neuroscale-platform) (ArgoCD + KServe + Kyverno + OpenCost + Backstage) with:
+It is built from the ground up as a complete system: a production-grade Kubernetes ML platform (ArgoCD + KServe + Kyverno + OpenCost) wired end-to-end into Splunk, with an LLM agent that can query, reason, and act — autonomously.
 
-- **Real-time telemetry ingestion** → K8s events stream into Splunk via HEC (4 concurrent threads)
-- **SPL-powered anomaly detection** → Splunk alerts fire on model failures, cost spikes, and policy violations
-- **MCP-connected reasoning** → Agent queries live Splunk data via Model Context Protocol
-- **Runbook RAG** → Every action is grounded in documented runbooks, not hallucination
-- **Autonomous remediation** → 3 self-healing workflows execute without human intervention
-- **Operator dashboard** → Streamlit UI with full reasoning transparency and manual override
+No human in the loop. No toy demo. A real self-healing ops system.
+
+- **Real-time telemetry ingestion** → KServe, Kyverno, OpenCost, and ArgoCD events stream into Splunk via HEC across 4 concurrent threads
+- **SPL-powered anomaly detection** → Splunk threshold alerts fire automatically on model failures, cost spikes, and policy violations
+- **MCP-connected reasoning** → The agent queries live Splunk data mid-reasoning via Model Context Protocol — every answer cites its data source
+- **Runbook RAG** → Every remediation action is grounded in documented runbooks, not hallucination
+- **Autonomous self-healing** → 3 end-to-end workflows execute without human intervention: model recovery, policy remediation, cost optimization
+- **Operator dashboard** → Streamlit UI exposes the full reasoning chain, SPL queries, and action log in real time
 
 **Hackathon Track:** Platform & Developer Experience  
 **Bonus Target:** Best Use of Splunk MCP Server
@@ -272,7 +274,7 @@ neuroscale-ops-agent/
 ├── scripts/
 │   ├── setup.sh                         # One-command setup
 │   └── smoke-test-extended.sh           # Full connectivity smoke test
-├── k8s-manifests/                       # Inherited from neuroscale-platform
+├── k8s-manifests/                       # Kubernetes manifests (ArgoCD, KServe, Kyverno, OpenCost)
 ├── .github/workflows/ci.yml             # Lint + import smoke test CI
 ├── .env.example                         # Environment variable template
 ├── requirements.txt                     # Python dependencies
@@ -282,20 +284,20 @@ neuroscale-ops-agent/
 
 ---
 
-## What's New vs NeuroScale Platform
+## What's Inside
 
-This project builds directly on [NeuroScale Platform](https://github.com/sodiq-code/neuroscale-platform).
+A complete, self-contained system — every component purpose-built for this project:
 
-| Component | Status |
-|-----------|--------|
-| `splunk-integration/` | **New** — real-time K8s→Splunk HEC pipeline |
-| `agent/core.py` | **New** — Llama 3.3 70B agentic reasoning with 14 function-calling tools |
-| `tools/splunk_client.py` | **New** — Splunk SDK + HEC + MCP client |
-| `tools/runbook_rag.py` | **New** — RAG over existing platform runbook |
-| `tools/kubernetes_ops.py` | **New** — programmatic cluster operations |
-| `tools/splunk_hosted_models.py` | **New** — Foundation-Sec, Deep Time Series, GPT-OSS integrations |
-| `workflows/` | **New** — 3 autonomous remediation workflows |
-| `ui/app.py` | **New** — Streamlit operator dashboard with reasoning panel |
+| Component | What It Does |
+|-----------|-------------|
+| `splunk-integration/` | Real-time K8s→Splunk HEC pipeline (4 threads, 30s interval) |
+| `agent/core.py` | Llama 3.3 70B agentic reasoning loop with 14 function-calling tools |
+| `tools/splunk_client.py` | Splunk SDK + HEC + MCP client — the agent's data layer |
+| `tools/runbook_rag.py` | Keyword RAG over operational runbooks — grounds every action |
+| `tools/kubernetes_ops.py` | Programmatic cluster operations via kubectl and ArgoCD API |
+| `tools/splunk_hosted_models.py` | Foundation-Sec, Deep Time Series, GPT-OSS Splunk AI integrations |
+| `workflows/` | 3 autonomous end-to-end remediation workflows |
+| `ui/app.py` | Streamlit operator dashboard with live reasoning panel |
 
 ---
 
