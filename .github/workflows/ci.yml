@@ -48,8 +48,8 @@ jobs:
           import sys
           sys.path.insert(0, '.')
           from tools.runbook_rag import RunbookRAG
-          from tools.kubernetes_ops import KubernetesOps
-          from tools.splunk_client import SplunkClient
+          import tools.kubernetes_ops as kubernetes_ops
+          import tools.splunk_client as splunk_client
           from workflows import model_down, policy_violation, cost_spike
           print('All imports successful')
           "
