@@ -64,7 +64,7 @@ jobs:
           sys.path.insert(0, '.')
           from tools.runbook_rag import RunbookRAG
           rag = RunbookRAG()
-          result = rag.query('model inference error')
+          result = rag.lookup('model inference error')
           assert len(result) > 0, 'RAG returned empty result'
           print(f'RAG test passed: {len(result)} chars returned')
           "
