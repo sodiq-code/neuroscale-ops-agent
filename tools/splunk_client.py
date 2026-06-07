@@ -48,7 +48,7 @@ def _get_service() -> splunk_client.Service:
 
 
 def run_spl_query(spl: str, earliest: str = "-1h", latest: str = "now",
-                  max_results: int = 50) -> list[dict]:
+                  max_results: int = 15) -> list[dict]:
     """
     Run a Splunk SPL query and return results as a list of dicts.
 

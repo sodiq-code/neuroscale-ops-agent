@@ -427,9 +427,11 @@ class NeuroScaleOpsAgent:
         self.tool_calls_log = []
         self.history.append({"role": "user", "content": user_message})
 
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}] + self.history
+        # Keep only last 4 exchanges to stay within token limits on free tier
+        trimmed_history = self.history[-8:] if len(self.history) > 8 else self.history
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}] + trimmed_history
 
-        max_iterations = 8  # Prevent infinite loops
+        max_iterations = 5  # Prevent infinite loops
         iteration = 0
 
         while iteration < max_iterations:
@@ -441,6 +443,7 @@ class NeuroScaleOpsAgent:
                 tools=TOOLS,
                 tool_choice="auto",
                 temperature=0.1,  # Low temp for precise ops decisions
+                max_tokens=1024,
             )
 
             msg = response.choices[0].message
