@@ -13,7 +13,9 @@
 
 ---
 
-## Demo Video
+## Live Demo
+
+**[▶ Try it live → neuroscale-ops-agent.streamlit.app](https://neuroscale-ops-agent.streamlit.app)**
 
 [![NeuroScale Ops Agent Demo](https://img.youtube.com/vi/ykjjNaJw6T4/maxresdefault.jpg)](https://youtu.be/ykjjNaJw6T4)
 
@@ -214,6 +216,7 @@ python3 splunk-integration/k8s_to_splunk.py
 ```bash
 streamlit run ui/app.py
 # → http://localhost:8501
+# Or use the hosted version: https://neuroscale-ops-agent.streamlit.app
 ```
 
 ### Demo mode (zero infrastructure)
