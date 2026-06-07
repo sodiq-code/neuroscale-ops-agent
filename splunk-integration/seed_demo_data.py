@@ -42,7 +42,7 @@ def seed_model_metrics():
         # Simulate a spike then recovery for drama in the demo
         error_rate = 0.01 if i < 15 else random.uniform(0.08, 0.15)
         send_event({
-            "model_name": model,
+            "name": model,
             "namespace": "neuroscale-models",
             "status": "Running" if error_rate < 0.05 else "Degraded",
             "latency_p99_ms": round(random.uniform(120, 450), 2),

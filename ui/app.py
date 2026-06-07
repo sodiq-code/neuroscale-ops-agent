@@ -297,9 +297,11 @@ with st.sidebar:
         )
 
     openai_key = os.getenv("OPENAI_API_KEY", "")
+    llm_model = os.getenv("OPENAI_MODEL", "gpt-4o")
+    llm_label = llm_model.split("-")[0].capitalize() + " " + llm_model.split("-")[1] if "-" in llm_model else llm_model
     if openai_key and openai_key != "sk-...":
         st.markdown(
-            '<span class="badge badge-green">● GPT-4o Ready</span>',
+            f'<span class="badge badge-green">● {llm_label} Ready</span>',
             unsafe_allow_html=True
         )
     else:
@@ -320,7 +322,7 @@ st.markdown("""
                 🧠 NeuroScale Ops Agent
             </h1>
             <p style="color:#8b949e; margin:0.2rem 0 0 0; font-size:0.85rem;">
-                Autonomous Incident Commander · Powered by Splunk MCP + GPT-4o · 
+                Autonomous Incident Commander · Powered by Splunk MCP + Llama-3.3-70B · 
                 GitOps · KServe · Kyverno · OpenCost
             </p>
         </div>
