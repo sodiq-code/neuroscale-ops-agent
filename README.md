@@ -6,20 +6,24 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
 [![Splunk](https://img.shields.io/badge/Splunk-MCP%20%2B%20HEC-FF5733)](https://splunk.com)
+[![LLM](https://img.shields.io/badge/LLM-Llama%203.3%2070B%20(Groq)-8B5CF6)](https://groq.com)
 [![Built for](https://img.shields.io/badge/Hackathon-Splunk%20Agentic%20Ops%202026-blueviolet)](https://splunk.devpost.com)
 [![Track](https://img.shields.io/badge/Track-Platform%20%26%20Developer%20Experience-green)](https://splunk.devpost.com)
-[![Bonus](https://img.shields.io/badge/Bonus-Best%20Use%20of%20Splunk%20MCP%20Server-orange)](https://splunk.devpost.com)
-[![Bonus](https://img.shields.io/badge/Bonus-Best%20Use%20of%20Splunk%20Developer%20Tools-orange)](https://splunk.devpost.com)
-[![Bonus](https://img.shields.io/badge/Bonus-Best%20Use%20of%20Splunk%20Hosted%20Models-orange)](https://splunk.devpost.com)
+[![MCP Bonus](https://img.shields.io/badge/Bonus-Best%20Use%20of%20Splunk%20MCP%20Server-orange)](https://splunk.devpost.com)
+
+---
+
+## Demo Video
+
+[![NeuroScale Ops Agent Demo](https://img.youtube.com/vi/ykjjNaJw6T4/maxresdefault.jpg)](https://youtu.be/ykjjNaJw6T4)
+
+**[▶ Watch the full demo on YouTube](https://youtu.be/ykjjNaJw6T4)**
 
 ---
 
 ## What This Is
 
-**NeuroScale Ops Agent** is a GPT-4o-powered autonomous agent that monitors, detects, and self-heals a Kubernetes-based machine learning platform — using **Splunk as its single pane of glass**.
-
-**Hackathon Track:** Platform & Developer Experience  
-**Bonus Targets:** Best Use of Splunk MCP Server · Best Use of Splunk Hosted Models · Best Use of Splunk Developer Tools
+**NeuroScale Ops Agent** is an autonomous AI agent that monitors, detects, and self-heals a Kubernetes-based machine learning platform — using **Splunk as its single pane of glass**.
 
 It extends [NeuroScale Platform](https://github.com/sodiq-code/neuroscale-platform) (ArgoCD + KServe + Kyverno + OpenCost + Backstage) with:
 
@@ -28,92 +32,109 @@ It extends [NeuroScale Platform](https://github.com/sodiq-code/neuroscale-platfo
 - **MCP-connected reasoning** → Agent queries live Splunk data via Model Context Protocol
 - **Runbook RAG** → Every action is grounded in documented runbooks, not hallucination
 - **Autonomous remediation** → 3 self-healing workflows execute without human intervention
-- **Operator dashboard** → Streamlit UI with reasoning transparency and manual override
+- **Operator dashboard** → Streamlit UI with full reasoning transparency and manual override
 
----
-
-## Demo
-
-> **Watch the demo:** *(Upload to YouTube after recording — see [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md) for the script)*
-
-Run it yourself in 2 minutes — no cluster or Splunk required:
-
-```bash
-git clone https://github.com/sodiq-code/neuroscale-ops-agent
-cd neuroscale-ops-agent
-bash scripts/setup.sh
-DEMO_MODE=true streamlit run ui/app.py
-```
-
-Open `http://localhost:8501` and ask the agent anything.
+**Hackathon Track:** Platform & Developer Experience  
+**Bonus Target:** Best Use of Splunk MCP Server
 
 ---
 
 ## Architecture
 
+![NeuroScale Ops Agent Architecture](assets/architecture.png)
+
 ```
 K8s Cluster (k3d)
-  ├── KServe (model inference)
-  ├── Kyverno (policy engine)      ──► splunk-integration/k8s_to_splunk.py
-  ├── OpenCost (cost monitoring)        (4 threads, 30s interval, HEC)
-  └── ArgoCD (GitOps)                        │
-                                        Splunk Index: neuroscale
-                                        ├── Alerts (SPL thresholds)
-                                        └── MCP Server ──► agent/core.py (GPT-4o)
-                                                                │
-                                                    ┌───────────┼───────────┐
-                                                    ▼           ▼           ▼
-                                              runbook_rag  splunk_client  k8s_ops
-                                                    │           │           │
-                                                    └──── workflows/ ───────┘
-                                                              │
-                                                        ui/app.py (Streamlit)
+  ├── KServe   (model inference)
+  ├── Kyverno  (policy engine)      ──► splunk-integration/k8s_to_splunk.py
+  ├── OpenCost (cost monitoring)         (4 threads, 30s interval, HEC)
+  └── ArgoCD   (GitOps)                          │
+                                          Splunk Index: neuroscale
+                                          ├── Alerts (SPL thresholds)
+                                          └── MCP Server ──► agent/core.py (Llama 3.3 70B)
+                                                                  │
+                                              ┌────────────────────┴────────────────────┐
+                                              ▼                   ▼                     ▼
+                                        runbook_rag          splunk_client           k8s_ops
+                                              └──────── workflows/ ────────────────────┘
+                                                               │
+                                                       ui/app.py (Streamlit)
 ```
 
-See [`architecture_diagram.md`](architecture_diagram.md) for the full Mermaid diagram with component details.
+See [`architecture_diagram.md`](architecture_diagram.md) for the full Mermaid diagram.
 
 ---
 
-## Splunk AI Capabilities Used
+## Screenshots
 
-This project leverages the following Splunk AI capabilities from [dev.splunk.com](https://dev.splunk.com):
+<table>
+  <tr>
+    <td><b>Operator Dashboard</b></td>
+    <td><b>Cost Attribution (OpenCost → Splunk)</b></td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshot_ui_overview.png" width="400"/></td>
+    <td><img src="assets/screenshot_cost_attribution.png" width="400"/></td>
+  </tr>
+  <tr>
+    <td><b>Kyverno Policy Violations</b></td>
+    <td><b>Agent Reasoning (MCP + SPL)</b></td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshot_kyverno_violations.png" width="400"/></td>
+    <td><img src="assets/screenshot_agent_reasoning.png" width="400"/></td>
+  </tr>
+  <tr>
+    <td><b>Splunk Query Results</b></td>
+    <td><b>Self-Healing Workflow</b></td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshot_splunk_query.png" width="400"/></td>
+    <td><img src="assets/screenshot_self_healing.png" width="400"/></td>
+  </tr>
+</table>
+
+---
+
+## Splunk Capabilities Used
 
 | Capability | Implementation | Prize Target |
 |-----------|----------------|-------------|
-| **[Splunk MCP Server](https://dev.splunk.com/enterprise/docs/devtools/mcp/)** | Agent queries live Splunk data mid-reasoning via Model Context Protocol | Best Use of MCP Server ($1K) |
-| **[Splunk Hosted Models](https://www.splunk.com/en_us/products/ai-toolkit.html)** | `tools/splunk_hosted_models.py` — Foundation-Sec (security triage), Cisco Deep Time Series (forecasting), GPT-OSS-120B (SPL generation) via `\| ai` SPL command | Best Use of Hosted Models ($1K) |
-| **[Python SDK for AI](https://dev.splunk.com/enterprise/docs/devtools/python/)** | `tools/splunk_client.py` — SDK-based REST queries, index management, SPL execution | Best Use of Developer Tools ($1K) |
-| **[HEC Ingestion](https://docs.splunk.com/Documentation/Splunk/latest/Data/UsetheHTTPEventCollector)** | `splunk-integration/k8s_to_splunk.py` — 4 threads, structured JSON events | Core capability |
-| **SPL Queries** | Model health, cost breakdown, policy violations, ArgoCD status | Core capability |
-| **Alert Webhooks** | `splunk-integration/alert-actions/trigger_agent.py` — Splunk alert fires → agent acts | AI for Splunk Apps pattern |
-| **Token Auth** | HEC token + REST API token (no OAuth — Controlled Availability per hackathon rules) | Compliant |
-| **Custom Index** | `neuroscale` index with 4 sourcetypes: `neuroscale:models`, `neuroscale:costs`, `neuroscale:policies`, `neuroscale:argocd` | Core capability |
+| **[Splunk MCP Server](https://dev.splunk.com/enterprise/docs/devtools/mcp/)** | Agent queries live Splunk data mid-reasoning via Model Context Protocol — 7 structured MCP tools | MCP Bonus ($1K) |
+| **[Python SDK](https://dev.splunk.com/enterprise/docs/devtools/python/)** | `tools/splunk_client.py` — SDK-based REST queries, index management, SPL execution | Core |
+| **[HEC Ingestion](https://docs.splunk.com/Documentation/Splunk/latest/Data/UsetheHTTPEventCollector)** | `splunk-integration/k8s_to_splunk.py` — 4 threads, structured JSON events per sourcetype | Core |
+| **SPL Queries** | Model health, cost breakdown, policy violations, ArgoCD status, error timelines | Core |
+| **Alert Webhooks** | `splunk-integration/alert-actions/trigger_agent.py` — Splunk alert fires → agent acts automatically | Core |
+| **Custom Index** | `neuroscale` index with 4 sourcetypes: `neuroscale:models`, `neuroscale:costs`, `neuroscale:policies`, `neuroscale:argocd` | Core |
+| **`splunk_generate_spl` tool** | LLM-generated SPL from natural language — grounded in the neuroscale schema | Core |
 
 ---
 
-## Agent Capabilities (11 Tools)
+## Agent Tools (14 Total)
 
 | Tool | What It Does |
 |------|-------------|
-| `splunk_query` | Run arbitrary SPL against the neuroscale index |
-| `get_model_status` | Query KServe inference service health via Splunk |
-| `get_cost_breakdown` | Per-namespace hourly cost from OpenCost→Splunk |
-| `check_policy_violations` | Kyverno blocks and warnings from Splunk |
-| `get_argocd_status` | GitOps sync status from Splunk |
-| `get_runbook_guidance` | RAG retrieval from the platform runbook |
-| `restart_inference_service` | kubectl rollout restart on KServe |
+| `query_splunk` | Run arbitrary SPL against the `neuroscale` index |
+| `get_model_health` | KServe inference service health, latency, error rates |
+| `get_policy_violations` | Kyverno blocks and warnings from Splunk |
+| `get_cost_attribution` | Per-namespace hourly cost from OpenCost → Splunk |
+| `get_error_timeline` | Time-series error trend for any model or namespace |
+| `lookup_runbook` | RAG retrieval from the platform runbook |
 | `trigger_argocd_sync` | Force-sync an ArgoCD application |
-| `scale_deployment` | kubectl scale on any namespace/deployment |
-| `get_cluster_events` | Recent K8s events for any namespace |
-| `send_splunk_event` | Write agent actions back to Splunk for audit trail |
+| `restart_inference_service` | kubectl rollout restart on a KServe InferenceService |
+| `patch_memory_limit` | Adjust memory limits on an InferenceService |
+| `get_cluster_overview` | Recent K8s events across any namespace |
+| `get_cost_direct` | Direct OpenCost API query (bypasses Splunk) |
+| `splunk_security_analysis` | Splunk Foundation-Sec model for security triage |
+| `splunk_forecast` | Cisco Deep Time Series forecasting via Splunk AI Toolkit |
+| `splunk_generate_spl` | Natural language → SPL query generation |
 
 ---
 
 ## Self-Healing Workflows
 
 ### 1. Model Down (`workflows/model_down.py`)
-**Trigger:** KServe model error rate > 5% for 5 minutes  
-**Steps:**
+**Trigger:** KServe model error rate > 5% for 5 minutes
 1. Pull model telemetry from Splunk
 2. Check ArgoCD sync status
 3. Retrieve runbook steps via RAG
@@ -122,8 +143,7 @@ This project leverages the following Splunk AI capabilities from [dev.splunk.com
 6. Write resolution event to Splunk
 
 ### 2. Policy Violation (`workflows/policy_violation.py`)
-**Trigger:** Kyverno BLOCK action in Splunk  
-**Steps:**
+**Trigger:** Kyverno BLOCK action appears in Splunk
 1. Identify the violating resource and policy
 2. Retrieve compliance runbook
 3. Annotate resource for review
@@ -131,8 +151,7 @@ This project leverages the following Splunk AI capabilities from [dev.splunk.com
 5. Verify no new violations within 60s
 
 ### 3. Cost Spike (`workflows/cost_spike.py`)
-**Trigger:** Hourly namespace cost > $50 threshold  
-**Steps:**
+**Trigger:** Hourly namespace cost > $50 threshold
 1. Pull OpenCost breakdown from Splunk
 2. Identify highest-spend namespace
 3. Check if workloads are over-provisioned
@@ -144,11 +163,10 @@ This project leverages the following Splunk AI capabilities from [dev.splunk.com
 ## Quick Start
 
 ### Prerequisites
-
 - Python 3.11+
 - `kubectl` configured (or use `DEMO_MODE=true`)
 - Splunk instance with HEC enabled (or use `DEMO_MODE=true`)
-- OpenAI API key
+- Groq API key (free at [console.groq.com](https://console.groq.com))
 
 ### 1. Clone and install
 
@@ -168,10 +186,18 @@ cp .env.example .env
 Key variables:
 
 ```env
-OPENAI_API_KEY=sk-...
+# LLM — Groq (free tier, fast inference)
+OPENAI_API_KEY=gsk_...          # Your Groq API key
+OPENAI_BASE_URL=https://api.groq.com/openai/v1
+OPENAI_MODEL=llama-3.3-70b-versatile
+
+# Splunk
 SPLUNK_HOST=localhost
 SPLUNK_HEC_TOKEN=your-hec-token
-DEMO_MODE=false   # set true to skip live infrastructure
+SPLUNK_INDEX=neuroscale
+
+# Demo mode (no infrastructure required)
+DEMO_MODE=false
 ```
 
 ### 3. Start the data forwarder
@@ -188,13 +214,20 @@ streamlit run ui/app.py
 # → http://localhost:8501
 ```
 
-### Demo mode (no infrastructure)
+### Demo mode (zero infrastructure)
 
 ```bash
 DEMO_MODE=true streamlit run ui/app.py
 ```
 
-All cluster and Splunk calls return realistic synthetic data. Full agent reasoning still fires.
+All cluster and Splunk calls return realistic synthetic data. Full agent reasoning still fires. Judges can run this in 2 minutes with only a Groq API key.
+
+### Seed demo data into Splunk
+
+```bash
+# Populates your Splunk index with realistic K8s events
+python3 splunk-integration/seed_demo_data.py
+```
 
 ---
 
@@ -213,25 +246,29 @@ See [`docs/SPLUNK_SETUP.md`](docs/SPLUNK_SETUP.md) for:
 ```
 neuroscale-ops-agent/
 ├── agent/
-│   └── core.py                          # GPT-4o function-calling loop (14 tools)
+│   └── core.py                          # Llama 3.3 70B function-calling loop (14 tools)
 ├── tools/
 │   ├── splunk_client.py                 # Splunk HEC + SDK + SPL query engine
 │   ├── runbook_rag.py                   # Keyword RAG over runbook.md
-│   └── kubernetes_ops.py                # kubectl / ArgoCD / KServe operations
+│   ├── kubernetes_ops.py                # kubectl / ArgoCD / KServe operations
+│   └── splunk_hosted_models.py          # Splunk AI Toolkit hosted model integrations
 ├── workflows/
 │   ├── model_down.py                    # Model failure → auto-recovery
 │   ├── policy_violation.py              # Kyverno violation → remediation
 │   └── cost_spike.py                    # Cost spike → scale-down
 ├── splunk-integration/
 │   ├── k8s_to_splunk.py                 # 4-thread real-time K8s→Splunk forwarder
+│   ├── seed_demo_data.py                # Demo data seeder (HEC population)
 │   └── alert-actions/
 │       └── trigger_agent.py             # Splunk alert webhook handler
 ├── ui/
 │   └── app.py                           # Streamlit operator dashboard
+├── assets/
+│   ├── architecture.png                 # Architecture diagram
+│   └── screenshot_*.png                 # Live demo screenshots
 ├── docs/
-│   ├── runbook.md                       # Source runbook (from neuroscale-platform)
-│   ├── SPLUNK_SETUP.md                  # Splunk Docker + HEC + MCP setup
-│   └── DEMO_GUIDE.md                    # Hackathon demo video script
+│   ├── runbook.md                       # Platform runbook (source for RAG)
+│   └── SPLUNK_SETUP.md                  # Splunk + HEC + MCP setup guide
 ├── scripts/
 │   ├── setup.sh                         # One-command setup
 │   └── smoke-test-extended.sh           # Full connectivity smoke test
@@ -245,22 +282,20 @@ neuroscale-ops-agent/
 
 ---
 
-## From NeuroScale Platform → Ops Agent
+## What's New vs NeuroScale Platform
 
-This project builds directly on [NeuroScale Platform](https://github.com/sodiq-code/neuroscale-platform) which includes: ArgoCD GitOps, KServe model serving, Kyverno policy enforcement, OpenCost monitoring, Backstage developer portal, and k3d local clusters.
+This project builds directly on [NeuroScale Platform](https://github.com/sodiq-code/neuroscale-platform).
 
-**What's new in this project:**
-
-| Component | Added |
-|-----------|-------|
-| `splunk-integration/` | New — real-time K8s→Splunk pipeline |
-| `agent/` | New — GPT-4o agentic reasoning layer |
-| `tools/splunk_client.py` | New — Splunk SDK + HEC + MCP client |
-| `tools/runbook_rag.py` | New — RAG over existing runbook |
-| `tools/kubernetes_ops.py` | New — programmatic cluster operations |
-| `workflows/` | New — 3 autonomous remediation workflows |
-| `ui/` | New — Streamlit operator dashboard |
-| `docs/runbook.md` | Imported from source repo |
+| Component | Status |
+|-----------|--------|
+| `splunk-integration/` | **New** — real-time K8s→Splunk HEC pipeline |
+| `agent/core.py` | **New** — Llama 3.3 70B agentic reasoning with 14 function-calling tools |
+| `tools/splunk_client.py` | **New** — Splunk SDK + HEC + MCP client |
+| `tools/runbook_rag.py` | **New** — RAG over existing platform runbook |
+| `tools/kubernetes_ops.py` | **New** — programmatic cluster operations |
+| `tools/splunk_hosted_models.py` | **New** — Foundation-Sec, Deep Time Series, GPT-OSS integrations |
+| `workflows/` | **New** — 3 autonomous remediation workflows |
+| `ui/app.py` | **New** — Streamlit operator dashboard with reasoning panel |
 
 ---
 
@@ -280,15 +315,15 @@ Checks: Python imports, file integrity, syntax, Splunk HEC connectivity, agent m
 
 ## Hackathon Context
 
-Built for the **Splunk Agentic Ops Hackathon 2026**.
+Built for the **Splunk Agentic Ops Hackathon 2026** (2,052 participants, deadline June 15 2026).
 
-- **Target tracks:** Platform & Dev Experience + MCP Bonus
-- **Key differentiators:**
-  - Real existing platform (not toy demo) extended with Splunk
-  - MCP-connected agent with full function-calling reasoning
-  - Demo mode works offline — zero friction for judges
-  - 4 Splunk sourcetypes, 11 agent tools, 3 self-healing workflows
-  - Runbook RAG grounds every action in documented procedures
+**Key differentiators:**
+- Real production-grade platform (not a toy demo) extended with Splunk
+- MCP-connected agent with full function-calling reasoning loop
+- Demo mode works offline — zero friction for judges
+- 4 Splunk sourcetypes, 14 agent tools, 3 self-healing workflows
+- Runbook RAG grounds every action in documented procedures
+- Self-healing loop: detect anomaly → Splunk alert → agent reasons → runbook → kubectl → verify → report back to Splunk
 
 ---
 
@@ -300,5 +335,5 @@ MIT — see [LICENSE](LICENSE).
 
 ## Author
 
-**Sodiq Jimoh** — DevOps & Cloud Engineer  
+**Sodiq Jimoh (Afsod)** — DevOps & Cloud Engineer  
 [GitHub](https://github.com/sodiq-code) · [LinkedIn](https://linkedin.com/in/sodiq-jimoh-afsod)

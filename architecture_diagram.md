@@ -43,7 +43,7 @@ flowchart TD
 
     subgraph AGENT["🤖 NeuroScale Ops Agent"]
         direction TB
-        CORE["agent/core.py\nGPT-4o Function Calling"]
+        CORE["agent/core.py\nLlama 3.3 70B Function Calling"]
         RAG["runbook_rag.py\nRunbook Retrieval"]
         SPLUNK_CLIENT["splunk_client.py\nSPL Query Engine"]
         K8S_OPS["kubernetes_ops.py\nCluster Operator"]
@@ -105,7 +105,7 @@ SPL-based threshold alerts fire when:
 
 Alert webhook hits `splunk-integration/alert-actions/trigger_agent.py`.
 
-### 3. Reasoning (GPT-4o Agent)
+### 3. Reasoning (Llama 3.3 70B Agent)
 The agent receives the alert context and:
 1. Queries runbook RAG for relevant remediation steps
 2. Pulls live telemetry from Splunk via SPL
@@ -128,7 +128,7 @@ Every agent decision is visible in the Streamlit dashboard:
 
 | Component | Tech | Purpose |
 |-----------|------|---------|
-| `agent/core.py` | OpenAI GPT-4o | Orchestration, function-calling |
+| `agent/core.py` | Groq Llama 3.3 70B | Orchestration, function-calling |
 | `tools/splunk_client.py` | Splunk SDK + HEC | Telemetry ingestion & SPL queries |
 | `tools/runbook_rag.py` | Keyword RAG | Runbook retrieval for grounding |
 | `tools/kubernetes_ops.py` | `kubectl` subprocess | Cluster inspection & remediation |
