@@ -340,5 +340,5 @@ MIT — see [LICENSE](LICENSE).
 
 ## Author
 
-**Sodiq Jimoh (Afsod)** — DevOps & Cloud Engineer  
+**Sodiq Jimoh (Afsod)** — Platform Engineer  
 [GitHub](https://github.com/sodiq-code) · [LinkedIn](https://linkedin.com/in/sodiq-jimoh-afsod)
