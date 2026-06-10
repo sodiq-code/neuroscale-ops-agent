@@ -189,7 +189,7 @@ def get_error_timeline(window: str = "-4h") -> list[dict]:
 def _demo_results(spl: str) -> list[dict]:
     """
     Return realistic synthetic results when DEMO_MODE=true.
-    Used for the hackathon demo and local testing without a live Splunk instance.
+    Used for demo and local testing without a live Splunk instance.
     """
     spl_lower = spl.lower()
 

@@ -240,7 +240,7 @@ def get_inference_services(namespace: str = "default") -> list[dict]:
 def get_opencost_by_namespace(window: str = "6h") -> list[dict]:
     """
     Query OpenCost directly for namespace-level cost attribution.
-    This is the FinOps intelligence layer — nobody else at this hackathon has this.
+    This is the FinOps intelligence layer — providing direct cost attribution per namespace.
     """
     opencost_url = os.getenv("OPENCOST_URL", "http://localhost:9090")
 

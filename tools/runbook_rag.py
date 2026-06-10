@@ -4,7 +4,7 @@ Runbook RAG — Retrieval-Augmented Generation over docs/runbook.md.
 Uses the real NeuroScale operational runbook — documented failure modes
 from actual production incidents, not synthetic examples.
 
-This gives the agent a knowledge base that no other hackathon entrant will have:
+This gives the agent a knowledge base grounded in real operational procedures:
 real CrashLoopBackOff recovery, Kyverno webhook disruption fixes,
 KServe ingress misconfiguration root causes — all battle-tested.
 """

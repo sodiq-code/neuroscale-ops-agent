@@ -6,7 +6,7 @@ The incident commander interface. Shows:
   Right panel: Agent reasoning transparency (which tools ran, what Splunk returned)
   Sidebar:     Live Splunk intelligence panels (model health, policy violations, costs)
 
-This is what judges see. Every interaction proves Splunk AI is doing real work.
+Every interaction surfaces live Splunk AI results with full reasoning transparency.
 """
 import sys
 import os
@@ -526,8 +526,7 @@ index=neuroscale (type="Warning" OR action="DENY")
 st.divider()
 st.markdown("""
 <div style="text-align:center; color:#8b949e; font-size:0.75rem; padding:0.5rem;">
-    <b>NeuroScale Ops Agent</b> · Splunk Agentic Ops Hackathon 2026 · 
-    Built on: ArgoCD · KServe · Kyverno · OpenCost · Backstage · Splunk MCP<br/>
+    <b>NeuroScale Ops Agent</b> · Built on: ArgoCD · KServe · Kyverno · OpenCost · Backstage · Splunk MCP<br/>
     <a href="https://github.com/sodiq-code/neuroscale-ops-agent" 
        style="color:#58a6ff;">github.com/sodiq-code/neuroscale-ops-agent</a>
 </div>

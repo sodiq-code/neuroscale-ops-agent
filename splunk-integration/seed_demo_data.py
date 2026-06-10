@@ -1,6 +1,6 @@
 """
 seed_demo_data.py — Push realistic NeuroScale demo events into Splunk HEC
-Run this on your laptop to populate Splunk with demo data for the hackathon demo.
+Run this to populate Splunk with realistic demo data for local testing and demonstrations.
 """
 
 import json

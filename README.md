@@ -225,7 +225,7 @@ streamlit run ui/app.py
 DEMO_MODE=true streamlit run ui/app.py
 ```
 
-All cluster and Splunk calls return realistic synthetic data. Full agent reasoning still fires. Judges can run this in 2 minutes with only a Groq API key.
+All cluster and Splunk calls return realistic synthetic data. Full agent reasoning still fires. Anyone can run this in 2 minutes with only a Groq API key.
 
 ### Seed demo data into Splunk
 
@@ -325,7 +325,7 @@ Built for the **Splunk Agentic Ops Hackathon 2026** (2,052 participants, deadlin
 **Key differentiators:**
 - Real production-grade platform (not a toy demo) extended with Splunk
 - MCP-connected agent with full function-calling reasoning loop
-- Demo mode works offline — zero friction for judges
+- Demo mode works offline — zero friction for evaluators
 - 4 Splunk sourcetypes, 14 agent tools, 3 self-healing workflows
 - Runbook RAG grounds every action in documented procedures
 - Self-healing loop: detect anomaly → Splunk alert → agent reasons → runbook → kubectl → verify → report back to Splunk

@@ -6,7 +6,6 @@ Triggered when:
   - A namespace exceeds its cost threshold (configurable per team)
   - Weekly cost review flags an outlier team
 
-This is the FinOps intelligence angle that nobody else at this hackathon has.
 OpenCost → Splunk → Agent → specific namespace + root cause + ResourceQuota fix.
 """
 from tools.splunk_client import get_cost_attribution, run_spl_query, send_to_hec

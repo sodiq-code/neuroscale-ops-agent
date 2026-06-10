@@ -4,7 +4,7 @@ This guide gets Splunk running locally so the NeuroScale Ops Agent has a live te
 
 ---
 
-## Option A: Splunk Free Trial (Recommended for Judges)
+## Option A: Splunk Free Trial (Recommended for Quick Setup)
 
 1. Go to [splunk.com/en_us/download](https://www.splunk.com/en_us/download/splunk-enterprise.html)
 2. Register for a free trial (60-day, no credit card)

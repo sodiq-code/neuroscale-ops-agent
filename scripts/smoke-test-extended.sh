@@ -198,7 +198,7 @@ done
 section "9. README Completeness"
 
 if [ -f README.md ]; then
-  for kw in "Quick Start" "Architecture" "Splunk" "demo" "hackathon" "GPT-4o"; do
+  for kw in "Quick Start" "Architecture" "Splunk" "demo" "self-healing"; do
     grep -qi "$kw" README.md && pass "README contains: $kw" || fail "README missing: $kw"
   done
 else
@@ -210,7 +210,7 @@ section "10. License Check"
 if [ -f LICENSE ]; then
   grep -qi "MIT" LICENSE && pass "MIT License present" || fail "License file exists but not MIT"
 else
-  fail "LICENSE file missing — HACKATHON DISQUALIFICATION RISK"
+  fail "LICENSE file missing"
 fi
 
 # ─── Summary ─────────────────────────────────────────────────
