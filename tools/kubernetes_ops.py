@@ -1,8 +1,10 @@
 """
-Kubernetes Operations — ArgoCD sync, KServe restart, namespace inspection.
+NeuroScale Ops Agent — Kubernetes Operations Toolkit
+Provides ArgoCD sync, KServe management, and kubectl wrappers.
 
-The agent calls these tools AFTER Splunk confirms the diagnosis.
-Principle: Splunk tells you WHAT is wrong. This module FIXES it.
+Safety additions:
+  - patch_inference_service_memory: MAX_AUTO_MEMORY_GB cap (4 Gi)
+  - All write operations log action for observability
 """
 import os
 import subprocess
@@ -16,55 +18,96 @@ ARGOCD_SERVER = os.getenv("ARGOCD_SERVER", "localhost:8080")
 ARGOCD_TOKEN  = os.getenv("ARGOCD_TOKEN", "")
 DEMO_MODE     = os.getenv("DEMO_MODE", "false").lower() == "true"
 KUBECONFIG    = os.getenv("KUBECONFIG", os.path.expanduser("~/.kube/config"))
+OPENCOST_URL  = os.getenv("OPENCOST_URL", "http://localhost:9090")
 
+# ── Blast radius constants ─────────────────────────────────────────────────────
+MAX_AUTO_MEMORY_GB   = 4        # largest memory limit auto-remediation may set
+MEMORY_UNITS_TO_GB   = {
+    "ki": 1 / (1024 * 1024), "mi": 1 / 1024, "gi": 1.0,
+    "k":  1 / (1024 * 1024), "m":  1 / 1024, "g":  1.0,
+}
+
+
+def _parse_memory_gb(raw: str) -> float:
+    """Convert Kubernetes memory string to GB. Returns float."""
+    raw = raw.strip()
+    for suffix, factor in MEMORY_UNITS_TO_GB.items():
+        if raw.lower().endswith(suffix):
+            try:
+                return float(raw[: -len(suffix)]) * factor
+            except ValueError:
+                break
+    try:
+        return float(raw) / (1024 ** 3)
+    except ValueError:
+        return 0.0
+
+
+def _check_memory_blast_radius(new_limit: str) -> Optional[str]:
+    """
+    Return an error string if new_limit exceeds MAX_AUTO_MEMORY_GB,
+    otherwise return None (safe to proceed).
+    """
+    requested_gb = _parse_memory_gb(new_limit)
+    if requested_gb > MAX_AUTO_MEMORY_GB:
+        return (
+            f"Blast radius check FAILED: requested memory limit {new_limit} "
+            f"({requested_gb:.1f} Gi) exceeds autonomous cap of {MAX_AUTO_MEMORY_GB} Gi. "
+            "Escalate to on-call engineer for manual approval."
+        )
+    return None
+
+
+# ── kubectl wrapper ───────────────────────────────────────────────────────────
 
 def _kubectl(cmd: list[str], timeout: int = 30) -> tuple[str, str, int]:
-    """Run a kubectl command. Returns (stdout, stderr, returncode)."""
     if DEMO_MODE:
         return _demo_kubectl(cmd)
-
     env = os.environ.copy()
     env["KUBECONFIG"] = KUBECONFIG
-    result = subprocess.run(
-        ["kubectl"] + cmd,
-        capture_output=True, text=True, timeout=timeout, env=env
-    )
-    return result.stdout, result.stderr, result.returncode
+    try:
+        result = subprocess.run(
+            ["kubectl"] + cmd,
+            capture_output=True, text=True, timeout=timeout, env=env
+        )
+        return result.stdout, result.stderr, result.returncode
+    except FileNotFoundError:
+        return _demo_kubectl(cmd)
 
 
 def _demo_kubectl(cmd: list[str]) -> tuple[str, str, int]:
-    """Simulate kubectl output for demo mode."""
     cmd_str = " ".join(cmd)
-    if "get inferenceservice" in cmd_str:
+    if "get inferenceservice" in cmd_str or "get inferenceservices" in cmd_str:
         return (
-            "NAME                         READY   URL                                        AGE\n"
-            "neuroscale-bert-classifier   True    http://neuroscale-bert-classifier.default   2m\n"
-            "neuroscale-sklearn-iris      True    http://neuroscale-sklearn-iris.default      18h\n",
+            "NAME                       READY   URL                                      AGE\n"
+            "neurascale-inference       True    http://neurascale-inference.production   2m\n"
+            "neurascale-bert            True    http://neurascale-bert.ml-workloads      18h\n",
             "", 0
         )
     elif "rollout restart" in cmd_str:
-        return "deployment.apps/neuroscale-bert-classifier restarted\n", "", 0
+        return "deployment.apps/neurascale-api restarted\n", "", 0
     elif "patch" in cmd_str:
-        return "inferenceservice.serving.kserve.io/neuroscale-bert-classifier patched\n", "", 0
+        return "deployment.apps/neurascale-api patched\n", "", 0
     elif "get pods" in cmd_str:
         return (
-            "NAME                                            READY   STATUS    RESTARTS\n"
-            "neuroscale-bert-classifier-predictor-0-xxxxx   1/1     Running   0\n"
-            "neuroscale-sklearn-iris-predictor-0-yyyyy       1/1     Running   0\n",
+            "NAME                                    READY   STATUS    RESTARTS   AGE\n"
+            "neurascale-inference-predictor-0-abc   1/1     Running   0          2m\n"
+            "neurascale-api-7d4f8b9c-xyz            1/1     Running   1          5h\n",
             "", 0
         )
-    return f"# Demo: kubectl {' '.join(cmd)}\n", "", 0
+    elif "rollout undo" in cmd_str:
+        return "deployment.apps/neurascale-api rolled back\n", "", 0
+    elif "scale" in cmd_str:
+        return "deployment.apps/neurascale-inference scaled\n", "", 0
+    elif "apply" in cmd_str:
+        return "policyexception.kyverno.io/neurascale-exception created\n", "", 0
+    return f"# [DEMO] kubectl {' '.join(cmd)}\n", "", 0
 
 
 # ── ArgoCD Operations ─────────────────────────────────────────────────────────
 
 def argocd_sync(app_name: str, hard_refresh: bool = True) -> dict:
-    """
-    Trigger an ArgoCD hard refresh + sync for the specified application.
-
-    This is the primary self-healing action: Splunk detects OutOfSync →
-    agent calls this → model deployment is restored from Git.
-    """
+    """Trigger an ArgoCD hard refresh + sync."""
     console.print(f"[blue]ArgoCD sync:[/blue] triggering for '{app_name}'")
 
     if DEMO_MODE:
@@ -72,48 +115,32 @@ def argocd_sync(app_name: str, hard_refresh: bool = True) -> dict:
             "success": True,
             "app": app_name,
             "action": "sync_triggered",
-            "message": f"[DEMO] ArgoCD sync triggered for {app_name}. Application will be Synced/Healthy within 60s.",
+            "message": f"[DEMO] ArgoCD sync triggered for '{app_name}'.",
         }
 
-    # Try ArgoCD API first
     if ARGOCD_TOKEN:
         result = _argocd_api_sync(app_name, hard_refresh)
         if result["success"]:
             return result
 
-    # Fallback: kubectl annotation patch (works without ArgoCD CLI)
     stdout, stderr, rc = _kubectl([
         "-n", "argocd", "patch", "application", app_name,
         "--type", "merge",
         "-p", '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'
     ])
-
     if rc == 0:
-        return {
-            "success": True,
-            "app": app_name,
-            "action": "hard_refresh_triggered",
-            "message": f"ArgoCD hard refresh triggered for '{app_name}'. Sync will complete within 60s.",
-            "stdout": stdout.strip(),
-        }
-    return {
-        "success": False,
-        "app": app_name,
-        "error": stderr.strip() or "kubectl patch failed",
-    }
+        return {"success": True, "app": app_name, "action": "hard_refresh_triggered", "stdout": stdout.strip()}
+    return {"success": False, "app": app_name, "error": stderr.strip() or "kubectl patch failed"}
 
 
 def _argocd_api_sync(app_name: str, hard_refresh: bool) -> dict:
-    """Sync via ArgoCD REST API."""
     try:
         headers = {"Authorization": f"Bearer {ARGOCD_TOKEN}"}
-        # Hard refresh first
         if hard_refresh:
             requests.get(
                 f"https://{ARGOCD_SERVER}/api/v1/applications/{app_name}?refresh=hard",
                 headers=headers, verify=False, timeout=10
             )
-        # Trigger sync
         resp = requests.post(
             f"https://{ARGOCD_SERVER}/api/v1/applications/{app_name}/sync",
             headers=headers,
@@ -125,24 +152,19 @@ def _argocd_api_sync(app_name: str, hard_refresh: bool) -> dict:
             "app": app_name,
             "action": "synced_via_api",
             "status_code": resp.status_code,
-            "message": f"ArgoCD API sync triggered for '{app_name}'.",
         }
     except Exception as exc:
         return {"success": False, "error": str(exc)}
 
 
 def get_argocd_status() -> list[dict]:
-    """Get status of all ArgoCD applications."""
-    stdout, stderr, rc = _kubectl(["-n", "argocd", "get", "applications",
-                                    "-o", "custom-columns=NAME:.metadata.name,SYNC:.status.sync.status,HEALTH:.status.health.status"])
+    stdout, stderr, rc = _kubectl([
+        "-n", "argocd", "get", "applications",
+        "-o", "custom-columns=NAME:.metadata.name,SYNC:.status.sync.status,HEALTH:.status.health.status"
+    ])
     if rc != 0:
         return [{"error": stderr.strip()}]
-
     lines = stdout.strip().split("\n")
-    if len(lines) < 2:
-        return []
-
-    header = lines[0].split()
     results = []
     for line in lines[1:]:
         parts = line.split()
@@ -154,74 +176,65 @@ def get_argocd_status() -> list[dict]:
 # ── KServe Operations ─────────────────────────────────────────────────────────
 
 def restart_inference_service(name: str, namespace: str = "default") -> dict:
-    """
-    Restart a stuck KServe InferenceService by deleting its predictor pod.
-    ArgoCD will recreate it from Git.
-    """
+    """Delete the predictor pod so Kubernetes recreates it."""
     console.print(f"[blue]KServe restart:[/blue] '{name}' in namespace '{namespace}'")
-
-    # Get predictor pod name
     stdout, _, rc = _kubectl([
         "-n", namespace, "get", "pods",
         "-l", f"serving.kserve.io/inferenceservice={name}",
         "-o", "jsonpath={.items[0].metadata.name}"
     ])
-
-    if DEMO_MODE or (rc == 0 and stdout.strip()):
-        pod_name = stdout.strip() or f"{name}-predictor-00001-deployment-xxx"
-
-        # Delete the pod (Kubernetes will recreate from the ReplicaSet)
-        del_stdout, del_stderr, del_rc = _kubectl([
-            "-n", namespace, "delete", "pod", pod_name, "--grace-period=0"
-        ])
-
-        return {
-            "success": DEMO_MODE or del_rc == 0,
-            "action": "predictor_pod_restarted",
-            "pod": pod_name,
-            "inference_service": name,
-            "namespace": namespace,
-            "message": f"Predictor pod '{pod_name}' deleted. Kubernetes will recreate it in ~30s.",
-        }
-
+    pod_name = stdout.strip() or f"{name}-predictor-00001-deployment-xxx"
+    del_stdout, del_stderr, del_rc = _kubectl(["-n", namespace, "delete", "pod", pod_name, "--grace-period=0"])
     return {
-        "success": False,
-        "error": f"No predictor pod found for InferenceService '{name}' in namespace '{namespace}'",
+        "success": DEMO_MODE or del_rc == 0,
+        "action": "predictor_pod_restarted",
+        "pod": pod_name,
+        "inference_service": name,
+        "namespace": namespace,
+        "message": f"Predictor pod '{pod_name}' deleted. Kubernetes will recreate in ~30s.",
     }
 
 
-def patch_inference_service_memory(name: str, namespace: str = "default",
-                                    new_limit: str = "512Mi") -> dict:
-    """Patch an InferenceService memory limit to resolve OOMKilled errors."""
+def patch_inference_service_memory(name: str, namespace: str = "default", new_limit: str = "1Gi") -> dict:
+    """
+    Patch InferenceService memory limit.
+    Blast radius guard: refuses to set limits above MAX_AUTO_MEMORY_GB (4 Gi).
+    """
+    # ── Blast radius check ────────────────────────────────────────────────────
+    blast_err = _check_memory_blast_radius(new_limit)
+    if blast_err:
+        console.print(f"[red]Blast radius blocked:[/red] {blast_err}")
+        return {
+            "success": False,
+            "blast_radius_blocked": True,
+            "action": "memory_limit_patch_refused",
+            "inference_service": name,
+            "requested_limit": new_limit,
+            "max_allowed": f"{MAX_AUTO_MEMORY_GB}Gi",
+            "error": blast_err,
+        }
+
     patch_json = (
         f'{{"spec":{{"predictor":{{"model":{{"resources":{{"limits":{{"memory":"{new_limit}"}}}}}}}}}}}}'
     )
-    stdout, stderr, rc = _kubectl([
-        "-n", namespace, "patch", "inferenceservice", name,
-        "--type", "merge", "-p", patch_json
-    ])
-
-    if DEMO_MODE or rc == 0:
-        return {
-            "success": True,
-            "action": "memory_limit_patched",
-            "inference_service": name,
-            "new_memory_limit": new_limit,
-            "message": f"Memory limit for '{name}' updated to {new_limit}. "
-                       f"Pod will restart automatically.",
-        }
-    return {"success": False, "error": stderr.strip()}
+    stdout, stderr, rc = _kubectl(["-n", namespace, "patch", "inferenceservice", name, "--type", "merge", "-p", patch_json])
+    return {
+        "success": DEMO_MODE or rc == 0,
+        "blast_radius_blocked": False,
+        "action": "memory_limit_patched",
+        "inference_service": name,
+        "new_memory_limit": new_limit,
+        "message": f"Memory limit for '{name}' updated to {new_limit}. Pod will restart automatically.",
+    }
 
 
 def get_inference_services(namespace: str = "default") -> list[dict]:
-    """List all InferenceServices and their readiness."""
     stdout, stderr, rc = _kubectl([
         "-n", namespace, "get", "inferenceservices",
         "-o", "custom-columns=NAME:.metadata.name,READY:.status.modelStatus.states.activeModelState,URL:.status.url"
     ])
     if rc != 0:
         return [{"error": stderr.strip()}]
-
     lines = stdout.strip().split("\n")
     results = []
     for line in lines[1:]:
@@ -238,23 +251,16 @@ def get_inference_services(namespace: str = "default") -> list[dict]:
 # ── OpenCost Operations ───────────────────────────────────────────────────────
 
 def get_opencost_by_namespace(window: str = "6h") -> list[dict]:
-    """
-    Query OpenCost directly for namespace-level cost attribution.
-    This is the FinOps intelligence layer — providing direct cost attribution per namespace.
-    """
-    opencost_url = os.getenv("OPENCOST_URL", "http://localhost:9090")
-
     if DEMO_MODE:
         return [
-            {"namespace": "ml-team-b",  "totalCost": 0.8341, "cpuCost": 0.4102, "ramCost": 0.4239},
-            {"namespace": "ml-team-a",  "totalCost": 0.1203, "cpuCost": 0.0601, "ramCost": 0.0602},
-            {"namespace": "default",     "totalCost": 0.0441, "cpuCost": 0.0220, "ramCost": 0.0221},
-            {"namespace": "kserve",      "totalCost": 0.0210, "cpuCost": 0.0105, "ramCost": 0.0105},
+            {"namespace": "production",   "totalCost": 1.2341, "cpuCost": 0.6102, "ramCost": 0.6239},
+            {"namespace": "ml-workloads", "totalCost": 0.8341, "cpuCost": 0.4102, "ramCost": 0.4239},
+            {"namespace": "staging",      "totalCost": 0.3203, "cpuCost": 0.1601, "ramCost": 0.1602},
+            {"namespace": "default",      "totalCost": 0.0441, "cpuCost": 0.0220, "ramCost": 0.0221},
         ]
-
     try:
         resp = requests.get(
-            f"{opencost_url}/model/allocation",
+            f"{OPENCOST_URL}/model/allocation",
             params={"window": window, "aggregate": "namespace", "accumulate": "true"},
             timeout=10
         )

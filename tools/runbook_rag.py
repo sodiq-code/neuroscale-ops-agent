@@ -66,9 +66,15 @@ class RunbookRAG:
                      "this", "that", "are", "was", "were", "be", "been", "has"}
         return {w for w in words if len(w) > 3 and w not in stopwords}
 
+    # RAG safety constants
+    RAG_MIN_SIMILARITY = 0.55   # minimum score for top result to be trusted (keyword scoring, not cosine)
+    RAG_MIN_MARGIN     = 0.08   # minimum gap between top-1 and top-2 scores
+
     def lookup(self, symptom: str, top_k: int = 2) -> str:
         """
         Find the most relevant runbook sections for a given symptom description.
+        Includes RAG margin gate: if top-1 score is too low OR the margin between
+        top-1 and top-2 is too narrow, fall back rather than hallucinate.
 
         Args:
             symptom: Natural language description of the problem
@@ -89,9 +95,35 @@ class RunbookRAG:
             # Bonus for exact phrase matches in title
             title_lower = title.lower()
             bonus = sum(2 for kw in symptom_keywords if kw in title_lower)
-            scored.append((overlap + bonus, title, section))
+            # Normalise to [0, 1] range so thresholds are consistent
+            max_possible = len(symptom_keywords) + 2 * len(symptom_keywords)
+            norm_score = (overlap + bonus) / max(max_possible, 1)
+            scored.append((norm_score, title, section))
 
         scored.sort(reverse=True, key=lambda x: x[0])
+
+        # ── RAG margin gate ──────────────────────────────────────────────────
+        if scored:
+            top_score = scored[0][0]
+            second_score = scored[1][0] if len(scored) > 1 else 0.0
+            margin = top_score - second_score
+
+            if top_score < self.RAG_MIN_SIMILARITY:
+                return (
+                    f"[RAG] Low confidence (top score {top_score:.2f} < {self.RAG_MIN_SIMILARITY}). "
+                    "No sufficiently matching runbook found.\n"
+                    "Recommend: check pod logs, describe the failing resource, "
+                    "and check ArgoCD application status."
+                )
+
+            if margin < self.RAG_MIN_MARGIN:
+                return (
+                    f"[RAG] Ambiguous match (margin {margin:.2f} < {self.RAG_MIN_MARGIN}, "
+                    f"top={top_score:.2f}, second={second_score:.2f}). "
+                    "Multiple sections equally likely — proceeding with base knowledge only.\n"
+                    "Recommend: check pod logs, describe the failing resource, "
+                    "and check ArgoCD application status."
+                )
 
         # Return top-k sections
         results = []

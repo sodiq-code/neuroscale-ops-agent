@@ -361,6 +361,9 @@ def dispatch_tool(name: str, args: dict) -> Any:
         result = patch_inference_service_memory(
             args["name"], args.get("namespace", "default"), args.get("new_limit", "512Mi")
         )
+        # Surface blast radius blocks prominently so the LLM knows to escalate
+        if isinstance(result, dict) and result.get("blast_radius_blocked"):
+            console.print(f"[red bold]⛔ Blast radius blocked:[/red bold] {result.get('error', '')}")
     elif name == "get_cluster_overview":
         result = {
             "inference_services": get_inference_services(),
